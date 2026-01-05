@@ -1,0 +1,2170 @@
+---
+title: "Stress_Tolerance2025"
+author: "Jay Yeam"
+date: "2025-11-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("enrichplot")
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("tximportData")
+```
+
+```{r, DeSeq2 Object pungens}
+
+library("tximport")
+library("readr")
+library("tximportData")
+library(readr)
+library(DESeq2)
+library(jsonlite)
+
+
+base   <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance"
+pdir   <- file.path(base, "salmon", "pungens")
+tx2dir <- file.path(base, "tx2gene")
+
+files <- list.files(pdir,
+                    pattern = "^quant\\.sf\\.gz$",
+                    recursive = TRUE,
+                    full.names = TRUE)
+names(files) <- basename(dirname(files))
+
+tx2gene <- read_tsv(
+  file.path(tx2dir, "tx2gene_pungens.tsv"),
+  col_names = c("transcript","gene"),
+  show_col_types = FALSE
+)
+
+txi_pungens <- tximport(files,
+                        type = "salmon",
+                        tx2gene = tx2gene,
+                        countsFromAbundance = "lengthScaledTPM")
+
+
+base <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance"
+
+# Create Sample metadat File 
+samples <- read.delim(file.path(base, "Deseq2_sample.txt"),
+                      sep = "\t", check.names = FALSE, stringsAsFactors = FALSE)
+samples_pungens <- samples[tolower(samples$Species) == "pungens", ]
+samples_pungens <- samples_pungens[
+  !is.na(samples_pungens$Sample_ID) & samples_pungens$Sample_ID != "",
+]
+common_ids <- intersect(samples_pungens$Admera_ID,
+                        colnames(txi_pungens$counts))
+
+samples_pungens <- samples_pungens[match(common_ids,
+                                         samples_pungens$Admera_ID), ]
+counts_pungens  <- txi_pungens$counts[, common_ids]
+stopifnot(!any(is.na(samples_pungens$Admera_ID)))
+stopifnot(all(samples_pungens$Admera_ID == colnames(counts_pungens)))
+
+
+coldata_pungens <- data.frame(
+  row.names   = samples_pungens$Admera_ID,
+  temperature = factor(tolower(samples_pungens$Temperature),
+                       levels = c("low","medium","high")),
+  wp          = factor(tolower(samples_pungens$WP),
+                       levels = c("low","medium","high"))
+)
+
+keep <- rowSums(counts_pungens) > 10
+dds_pungens <- DESeqDataSetFromMatrix(countData = round(counts_pungens[keep, ]),
+                                      colData   = coldata_pungens,
+                                      design    = ~ temperature + wp)
+
+dds_pungens <- DESeq(dds_pungens)
+saveRDS(dds_pungens,
+        file = file.path(base, "results", "deseq2", "dds_pungens.rds"))
+
+```
+
+```{r, DeSeq2 Object quiescens}
+base   <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance"
+pdir   <- file.path(base, "salmon", "quiescens")
+tx2dir <- file.path(base, "tx2gene")
+
+files <- list.files(pdir,
+                    pattern = "^quant\\.sf\\.gz$",
+                    recursive = TRUE,
+                    full.names = TRUE)
+names(files) <- basename(dirname(files))
+
+tx2gene <- read_tsv(
+  file.path(tx2dir, "tx2gene_quiescens.tsv"),
+  col_names = c("transcript","gene"),
+  show_col_types = FALSE
+)
+
+txi_quiescens <- tximport(files,
+                        type = "salmon",
+                        tx2gene = tx2gene,
+                        countsFromAbundance = "lengthScaledTPM")
+
+
+base <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance"
+
+# Create Sample metadat File 
+samples <- read.delim(file.path(base, "Deseq2_sample.txt"),
+                      sep = "\t", check.names = FALSE, stringsAsFactors = FALSE)
+samples_quiescens <- samples[tolower(samples$Species) == "quiescens", ]
+samples_pungens <- samples_quiescens[
+  !is.na(samples_quiescens$Sample_ID) & samples_quiescens$Sample_ID != "",
+]
+common_ids <- intersect(samples_quiescens$Admera_ID,
+                        colnames(txi_quiescens$counts))
+
+samples_quiescens <- samples_quiescens[match(common_ids,
+                                         samples_quiescens$Admera_ID), ]
+counts_quiescens  <- txi_quiescens$counts[, common_ids]
+stopifnot(!any(is.na(samples_quiescens$Admera_ID)))
+stopifnot(all(samples_quiescens$Admera_ID == colnames(counts_quiescens)))
+
+
+coldata_quiescens <- data.frame(
+  row.names   = samples_quiescens$Admera_ID,
+  temperature = factor(tolower(samples_quiescens$Temperature),
+                       levels = c("low","medium","high")),
+  wp          = factor(tolower(samples_quiescens$WP),
+                       levels = c("low","medium","high"))
+)
+
+keep <- rowSums(counts_quiescens) > 10
+dds_quiescens <- DESeqDataSetFromMatrix(countData = round(counts_quiescens[keep, ]),
+                                      colData   = coldata_quiescens,
+                                      design    = ~ temperature + wp)
+
+dds_quiescens <- DESeq(dds_quiescens)
+saveRDS(dds_quiescens,
+        file = file.path(base, "results", "deseq2", "dds_quiescens.rds"))
+
+```
+
+```{r, DeSeq2 Ojbect umbonatus}
+base   <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance"
+pdir   <- file.path(base, "salmon", "umbonatus")
+tx2dir <- file.path(base, "tx2gene")
+
+files <- list.files(pdir,
+                    pattern = "^quant\\.sf\\.gz$",
+                    recursive = TRUE,
+                    full.names = TRUE)
+names(files) <- basename(dirname(files))
+
+tx2gene <- read_tsv(
+  file.path(tx2dir, "tx2gene_umbonatus.tsv"),
+  col_names = c("transcript","gene"),
+  show_col_types = FALSE
+)
+
+txi_umbonatus <- tximport(files,
+                          type = "salmon",
+                          tx2gene = tx2gene,
+                          countsFromAbundance = "lengthScaledTPM")
+
+
+base <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance"
+
+samples <- read.delim(file.path(base, "Deseq2_sample.txt"),
+                      sep = "\t", check.names = FALSE, stringsAsFactors = FALSE)
+samples_umbonatus <- samples[tolower(samples$Species) == "umbonatus", ]
+samples_umbonatus <- samples_umbonatus[
+  !is.na(samples_umbonatus$Sample_ID) & samples_umbonatus$Sample_ID != "",
+]
+
+common_ids <- intersect(samples_umbonatus$Admera_ID,
+                        colnames(txi_umbonatus$counts))
+
+samples_umbonatus <- samples_umbonatus[match(common_ids,
+                                             samples_umbonatus$Admera_ID), ]
+counts_umbonatus  <- txi_umbonatus$counts[, common_ids]
+
+stopifnot(!any(is.na(samples_umbonatus$Admera_ID)))
+stopifnot(all(samples_umbonatus$Admera_ID == colnames(counts_umbonatus)))
+
+coldata_umbonatus <- data.frame(
+  row.names   = samples_umbonatus$Admera_ID,
+  temperature = factor(tolower(samples_umbonatus$Temperature),
+                       levels = c("low","medium","high")),
+  wp          = factor(tolower(samples_umbonatus$WP),
+                       levels = c("low","medium","high"))
+)
+
+keep <- rowSums(counts_umbonatus) > 10
+dds_umbonatus <- DESeqDataSetFromMatrix(countData = round(counts_umbonatus[keep, ]),
+                                        colData   = coldata_umbonatus,
+                                        design    = ~ temperature + wp)
+
+dds_umbonatus <- DESeq(dds_umbonatus)
+saveRDS(dds_umbonatus,
+        file = file.path(base, "results", "deseq2", "dds_umbonatus.rds"))
+
+```
+
+```{r, sample info}
+library(dplyr)
+culture2025 <- as.data.frame(read.csv("Stress_Tol_2025_culture_weights.csv"))
+treatment_batch <- as.data.frame(read.csv("Batch.csv"))
+
+names(culture2025)[10] <- "Dried_Weight_Adjusted"
+names(culture2025)[13] <- "Group"
+culture_sub2025 <- subset(culture2025, select = c(Sample_ID, RNA_ID, Batch, Species, Species_ID, Dried_Weight_Adjusted, Dried.Weight.Week, Group))
+
+culture2025 <- culture2025[!grepl("x", culture2025$Species_ID), ]
+culture_combined <- merge(culture_sub2025, treatment_batch, by = "Batch", all.x = TRUE)
+culture_combined <- na.omit(culture_combined)
+
+
+geno_pheno_df <- subset(culture_combined, !is.na(RNA_ID) & RNA_ID != "")
+geno_pheno_df <- merge(samples, geno_pheno_df, by.x = "Admera_ID", by.y = "RNA_ID", all.x = TRUE)
+geno_pheno_df <- subset(geno_pheno_df, select = c(Admera_ID, CustomerID, Batch, Species.x, Species_ID, Temperature, WP.x, Dried.Weight.Week))
+names(geno_pheno_df)[4] <- "Species"
+names(geno_pheno_df)[7] <- "WP"
+
+geno_pheno_df$Species_ID[geno_pheno_df$Admera_ID == "24209XR-05-63"] <- 7
+geno_pheno_df$Batch[geno_pheno_df$Admera_ID == "24209XR-05-63"] <- 3
+geno_pheno_df$Dried.Weight.Week[geno_pheno_df$Admera_ID == "24209XR-05-63"] <- 0.058604651
+
+geno_pheno_df <- geno_pheno_df %>%
+  mutate(Species = case_when(
+    Species == "pungens" & Species_ID %in% c(1, 2,21,22,23,24) ~ "south pungens",
+    Species == "pungens" & Species_ID %in% c(3, 4, 5, 6, 7, 8) ~ "north pungens",
+    TRUE ~ Species
+  ))
+write_csv(geno_pheno_df, "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/sample_phenotypes_df.csv")
+
+```
+
+```{r, Analyses}
+
+library(ggplot2)
+base <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/results/deseq2"
+
+#Read DeSeq Objects
+dds_pungens    <- readRDS(file.path(base, "dds_pungens.rds"))
+dds_quiescens  <- readRDS(file.path(base, "dds_quiescens.rds"))
+dds_umbonatus  <- readRDS(file.path(base, "dds_umbonatus.rds"))
+
+res_umbo_temp <- results(dds_umbonatus,
+                    contrast = c("temperature", "low", "high"))
+res_umbo_osm <- results(dds_umbonatus,
+                    contrast = c("wp", "low", "high"))
+res_umbo_LFC <- lfcShrink(dds_umbonatus,
+                          contrast = c("temperature", "low", "high"),
+                          res = res_umbo_temp,
+                          type = "normal")
+
+dds_umbonatus$wp <- as.factor(dds_umbonatus$wp)
+dds_umbonatus$temperature <- as.factor(dds_umbonatus$temperature)
+
+plotCounts(dds_umbonatus, gene = which.min(res_umbo_temp$pvalue), intgroup = "temperature")
+
+d <- plotCounts(dds_umbonatus, gene=which.min(res_umbo_temp$pvalue), intgroup="temperature", 
+                returnData=TRUE)
+tiff("/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/output_figures/sig_gene_plot.tiff", units="in", width=6, height=4, res=400)
+ggplot(d, aes(x = temperature, y = count)) + 
+  geom_point(position = position_jitter(w = 0.1, h = 0)) + 
+  scale_y_log10(breaks = c(25, 100, 400)) +
+  theme_bw() + 
+  theme(
+    panel.background = element_blank(),               # Remove gray background
+    panel.grid.major = element_blank(),               # Remove major grid lines
+    panel.grid.minor = element_blank(),               # Remove minor grid lines
+    panel.border = element_blank(),                   # Remove outer border
+    axis.line.x = element_line(color = "black", size = 1),  # Thick black x-axis line
+    axis.line.y = element_line(color = "black", size = 1),  # Thick black y-axis line
+    axis.text = element_text(size = 14),              # Increase font size of axis labels
+    axis.title = element_text(size = 16),             # Increase font size of axis titles
+    plot.title = element_text(size = 18, hjust = 0.5) # Increase font size of plot title
+  ) +
+  labs(x = "Temperature Conditions", y = "Count") 
+dev.off
+
+resOrdered <- res_umbo_temp[order(res_umbo_temp$pvalue),]
+summary(res_umbo_temp)
+sum(res_umbo_temp$padj < 0.1, na.rm=TRUE) #number of adjusted p-values less than 0.1
+res05 <- results(dds_umbonatus, alpha=0.05)
+summary(res05)
+sum(res05$padj < 0.05, na.rm=TRUE)
+```
+
+```{r, Volcano Plots umbo}
+# Add a column for -log10 p-value
+res_umbo_temp$neg_log10_pvalue <- -log10(res_umbo_temp$pvalue)
+# Set a threshold for significance (you can adjust this threshold as needed)
+sig_threshold <- 0.01
+log2fc_threshold <- 1  # You can adjust this threshold too (e.g., log2 fold change > 1 or < -1)
+res_umbo_temp$significance <- ifelse(res_umbo_temp$pvalue < sig_threshold & abs(res_umbo_temp$log2FoldChange) > log2fc_threshold,
+                                ifelse(res_umbo_temp$log2FoldChange > 0, "positive", "negative"),
+                                "non-significant")
+num_significant_genes <- sum(res_umbo_temp$significance != "non-significant", na.rm = TRUE)
+
+# Create the plot
+volcano_plot <- ggplot(res_umbo_temp, aes(x = log2FoldChange, y = neg_log10_pvalue)) +
+  geom_point(aes(color = significance),
+             alpha = 0.7, size = 2) +  # Color by significance classification
+  scale_color_manual(values = c("positive" = "#bb0c00",  # Red for positive significant
+                                "negative" = "#00AFBB",  # Blue for negative significant
+                                "non-significant" = "grey")) +  # Grey for non-significant
+  labs(title = "Volcano Plot: Temperature Effect (Low vs High)",
+       x = "Log2 Fold Change",
+       y = "-Log10 p-value") +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(
+    legend.position = "none",  # Remove legend
+    axis.title = element_text(size = 12),  # Increase axis labels size
+    axis.text = element_text(size = 14)    # Increase axis tick text size
+  ) +
+  geom_hline(yintercept = -log10(sig_threshold), linetype = "dashed", color = "gray") +  # Add p-value threshold line
+  geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold), linetype = "dashed", color = "gray") + 
+  scale_x_continuous(breaks = seq(-30, 30, by = 5)) +  # Increase x-axis ticks frequency
+  scale_y_continuous(breaks = seq(0, 16, by = 2)) 
+volcano_plot
+
+#Umbonatus water potential 
+
+res_umbo_osm$neg_log10_pvalue <- -log10(res_umbo_osm$pvalue)
+# Set a threshold for significance (you can adjust this threshold as needed)
+sig_threshold <- 0.01
+log2fc_threshold <- 1  # You can adjust this threshold too (e.g., log2 fold change > 1 or < -1)
+res_umbo_osm$significance <- ifelse(res_umbo_osm$pvalue < sig_threshold & abs(res_umbo_osm$log2FoldChange) > log2fc_threshold,
+                                ifelse(res_umbo_osm$log2FoldChange > 0, "positive", "negative"),
+                                "non-significant")
+num_significant_genes <- sum(res_umbo_osm$significance != "non-significant", na.rm = TRUE)
+volcano_plot <- ggplot(res_umbo_osm, aes(x = log2FoldChange, y = neg_log10_pvalue)) +
+  geom_point(aes(color = significance),
+             alpha = 0.7, size = 2) +  # Color by significance classification
+  scale_color_manual(values = c("positive" = "#bb0c00",  # Red for positive significant
+                                "negative" = "#00AFBB",  # Blue for negative significant
+                                "non-significant" = "grey")) +  # Grey for non-significant
+  labs(title = "Volcano Plot: Water Potential Effect (Low vs High)",
+       x = "Log2 Fold Change",
+       y = "-Log10 p-value") +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(
+    legend.position = "none",  # Remove legend
+    axis.title = element_text(size = 12),  # Increase axis labels size
+    axis.text = element_text(size = 14)    # Increase axis tick text size
+  ) +
+  geom_hline(yintercept = -log10(sig_threshold), linetype = "dashed", color = "gray") +  # Add p-value threshold line
+  geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold), linetype = "dashed", color = "gray") + 
+  scale_x_continuous(breaks = seq(-30, 30, by = 5)) +  # Increase x-axis ticks frequency
+  scale_y_continuous(breaks = seq(0, 30, by = 5)) 
+volcano_plot
+
+```
+
+```{r, Volcano Plots pungens}
+res_pun_temp <- results(dds_pungens,
+                    contrast = c("temperature", "low", "high"))
+res_pun_osm <- results(dds_pungens,
+                    contrast = c("wp", "low", "high"))
+# Add a column for -log10 p-value
+res_pun_temp$neg_log10_pvalue <- -log10(res_pun_temp$pvalue)
+# Set a threshold for significance (you can adjust this threshold as needed)
+sig_threshold <- 0.01
+log2fc_threshold <- 1  # You can adjust this threshold too (e.g., log2 fold change > 1 or < -1)
+res_pun_temp$significance <- ifelse(res_pun_temp$pvalue < sig_threshold & abs(res_pun_temp$log2FoldChange) > log2fc_threshold,
+                                ifelse(res_pun_temp$log2FoldChange > 0, "positive", "negative"),
+                                "non-significant")
+num_significant_genes <- sum(res_pun_temp$significance != "non-significant", na.rm = TRUE)
+# Create the plot
+volcano_plot <- ggplot(res_pun_temp, aes(x = log2FoldChange, y = neg_log10_pvalue)) +
+  geom_point(aes(color = significance),
+             alpha = 0.7, size = 2) +  # Color by significance classification
+  scale_color_manual(values = c("positive" = "#bb0c00",  # Red for positive significant
+                                "negative" = "#00AFBB",  # Blue for negative significant
+                                "non-significant" = "grey")) +  # Grey for non-significant
+  labs(title = "Volcano Plot: Temperature Effect (Low vs High)",
+       x = "Log2 Fold Change",
+       y = "-Log10 p-value") +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(
+    legend.position = "none",  # Remove legend
+    axis.title = element_text(size = 12),  # Increase axis labels size
+    axis.text = element_text(size = 14)    # Increase axis tick text size
+  ) +
+  geom_hline(yintercept = -log10(sig_threshold), linetype = "dashed", color = "gray") +  # Add p-value threshold line
+  geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold), linetype = "dashed", color = "gray") + 
+  scale_x_continuous(breaks = seq(-30, 30, by = 5)) +  # Increase x-axis ticks frequency
+  scale_y_continuous(breaks = seq(0, 16, by = 2)) 
+volcano_plot
+
+#Pungens water potential 
+
+res_pun_osm$neg_log10_pvalue <- -log10(res_pun_osm$pvalue)
+# Set a threshold for significance (you can adjust this threshold as needed)
+sig_threshold <- 0.01
+log2fc_threshold <- 1  # You can adjust this threshold too (e.g., log2 fold change > 1 or < -1)
+res_pun_osm$significance <- ifelse(res_pun_osm$pvalue < sig_threshold & abs(res_pun_osm$log2FoldChange) > log2fc_threshold,
+                                ifelse(res_pun_osm$log2FoldChange > 0, "positive", "negative"),
+                                "non-significant")
+num_significant_genes <- sum(res_pun_osm$significance != "non-significant", na.rm = TRUE)
+volcano_plot <- ggplot(res_pun_osm, aes(x = log2FoldChange, y = neg_log10_pvalue)) +
+  geom_point(aes(color = significance),
+             alpha = 0.7, size = 2) +  # Color by significance classification
+  scale_color_manual(values = c("positive" = "#bb0c00",  # Red for positive significant
+                                "negative" = "#00AFBB",  # Blue for negative significant
+                                "non-significant" = "grey")) +  # Grey for non-significant
+  labs(title = "Volcano Plot: Water Potential Effect (Low vs High)",
+       x = "Log2 Fold Change",
+       y = "-Log10 p-value") +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(
+    legend.position = "none",  # Remove legend
+    axis.title = element_text(size = 12),  # Increase axis labels size
+    axis.text = element_text(size = 14)    # Increase axis tick text size
+  ) +
+  geom_hline(yintercept = -log10(sig_threshold), linetype = "dashed", color = "gray") +  # Add p-value threshold line
+  geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold), linetype = "dashed", color = "gray") + 
+  scale_x_continuous(breaks = seq(-30, 30, by = 5)) +  # Increase x-axis ticks frequency
+  scale_y_continuous(breaks = seq(0, 30, by = 5)) 
+volcano_plot
+
+```
+
+```{r, Volcano plot quiescens}
+res_qui_temp <- results(dds_quiescens,
+                    contrast = c("temperature", "low", "high"))
+res_qui_osm <- results(dds_quiescens,
+                    contrast = c("wp", "low", "high"))
+# Add a column for -log10 p-value
+res_qui_temp$neg_log10_pvalue <- -log10(res_qui_temp$pvalue)
+# Set a threshold for significance (you can adjust this threshold as needed)
+sig_threshold <- 0.05
+log2fc_threshold <- 1  # You can adjust this threshold too (e.g., log2 fold change > 1 or < -1)
+res_qui_temp$significance <- ifelse(res_qui_temp$pvalue < sig_threshold & abs(res_qui_temp$log2FoldChange) > log2fc_threshold,
+                                ifelse(res_qui_temp$log2FoldChange > 0, "positive", "negative"),
+                                "non-significant")
+num_significant_genes <- sum(res_qui_temp$significance != "non-significant", na.rm = TRUE)
+# Create the plot
+volcano_plot <- ggplot(res_qui_temp, aes(x = log2FoldChange, y = neg_log10_pvalue)) +
+  geom_point(aes(color = significance),
+             alpha = 0.7, size = 2) +  # Color by significance classification
+  scale_color_manual(values = c("positive" = "#bb0c00",  # Red for positive significant
+                                "negative" = "#00AFBB",  # Blue for negative significant
+                                "non-significant" = "grey")) +  # Grey for non-significant
+  labs(title = "Volcano Plot: Temperature Effect (Low vs High)",
+       x = "Log2 Fold Change",
+       y = "-Log10 p-value") +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(
+    legend.position = "none",  # Remove legend
+    axis.title = element_text(size = 12),  # Increase axis labels size
+    axis.text = element_text(size = 14)    # Increase axis tick text size
+  ) +
+  geom_hline(yintercept = -log10(sig_threshold), linetype = "dashed", color = "gray") +  # Add p-value threshold line
+  geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold), linetype = "dashed", color = "gray") + 
+  scale_x_continuous(breaks = seq(-30, 30, by = 5)) +  # Increase x-axis ticks frequency
+  scale_y_continuous(breaks = seq(0, 16, by = 2)) 
+volcano_plot
+
+#quiescens water potential 
+
+res_qui_osm$neg_log10_pvalue <- -log10(res_qui_osm$pvalue)
+# Set a threshold for significance (you can adjust this threshold as needed)
+sig_threshold <- 0.05
+log2fc_threshold <- 1  # You can adjust this threshold too (e.g., log2 fold change > 1 or < -1)
+res_qui_osm$significance <- ifelse(res_qui_osm$pvalue < sig_threshold & abs(res_qui_osm$log2FoldChange) > log2fc_threshold,
+                                ifelse(res_qui_osm$log2FoldChange > 0, "positive", "negative"),
+                                "non-significant")
+num_significant_genes <- sum(res_qui_osm$significance != "non-significant", na.rm = TRUE)
+volcano_plot <- ggplot(res_qui_osm, aes(x = log2FoldChange, y = neg_log10_pvalue)) +
+  geom_point(aes(color = significance),
+             alpha = 0.7, size = 2) +  # Color by significance classification
+  scale_color_manual(values = c("positive" = "#bb0c00",  # Red for positive significant
+                                "negative" = "#00AFBB",  # Blue for negative significant
+                                "non-significant" = "grey")) +  # Grey for non-significant
+  labs(title = "Volcano Plot: Water Potential Effect (Low vs High)",
+       x = "Log2 Fold Change",
+       y = "-Log10 p-value") +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  theme(
+    legend.position = "none",  # Remove legend
+    axis.title = element_text(size = 12),  # Increase axis labels size
+    axis.text = element_text(size = 14)    # Increase axis tick text size
+  ) +
+  geom_hline(yintercept = -log10(sig_threshold), linetype = "dashed", color = "gray") +  # Add p-value threshold line
+  geom_vline(xintercept = c(-log2fc_threshold, log2fc_threshold), linetype = "dashed", color = "gray") + 
+  scale_x_continuous(breaks = seq(-30, 30, by = 5)) +  # Increase x-axis ticks frequency
+  scale_y_continuous(breaks = seq(0, 30, by = 5)) 
+volcano_plot
+
+```
+
+```{r, significant genes}
+
+######## UMBONATUS #########
+sig_genes <- res_umbo_temp[which(res_umbo_temp$padj < 0.01 & abs(res_umbo_temp$log2FoldChange) > 1), ]
+sig_genes_sorted <- as.data.frame(sig_genes[order(abs(sig_genes$log2FoldChange), decreasing = TRUE), ])
+
+head(sig_genes_sorted)
+file_path_umbo <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/funannotate/Suillus_umbonatus.annotations.txt"
+annotations_umbo_df <- read.delim(file_path_umbo, header = TRUE, sep = "\t")
+annotations_umbo_df <- annotations_umbo_df[, c("GeneID", "TranscriptID", "Feature", "Contig", "Start", "Stop", "Product", "BUSCO", "PFAM", "InterPro", "EggNog", "COG", "GO.Terms")] 
+sig_umbo_genes_df <- annotations_umbo_df[annotations_umbo_df$GeneID %in% rownames(sig_genes_sorted), ]
+sig_umbo_genes_df <- sig_umbo_genes_df[match(rownames(sig_genes_sorted), sig_umbo_genes_df$GeneID), ] # Order sig_pun_genes_df based on the same order of padj in sig_genes_sorted
+
+
+######## PUNGENS #########
+sig_genes_pungens <- res_pun_temp[which(res_pun_temp$padj < 0.01 & abs(res_pun_temp$log2FoldChange) > 1), ]
+sig_genes_sorted <- as.data.frame(sig_genes_pungens[order(abs(sig_genes_pungens$log2FoldChange), decreasing = TRUE), ])
+file_path_pun <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/funannotate/Suillus_pungens.annotations.txt"
+annotations_pun_df <- read.delim(file_path_pun, header = TRUE, sep = "\t")
+annotations_pun_df <- annotations_pun_df[, c("GeneID", "TranscriptID", "Feature", "Contig", "Start", "Stop", "Product", "BUSCO", "PFAM", "InterPro", "EggNog", "COG", "GO.Terms")] 
+sig_pun_genes_df <- annotations_pun_df[annotations_pun_df$GeneID %in% rownames(sig_genes_sorted), ]
+sig_pun_genes_df <- as.data.frame(sig_pun_genes_df[match(rownames(sig_genes_sorted), sig_pun_genes_df$GeneID), ])
+
+######### QUIESCENS #######################
+sig_genes_qui <- res_qui_temp[which(res_qui_temp$padj < 0.01 & abs(res_qui_temp$log2FoldChange) > 1), ]
+sig_genes_sorted <- as.data.frame(sig_genes_qui[order(abs(sig_genes_qui$log2FoldChange), decreasing = TRUE), ])
+file_path_qui <- "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/funannotate/Suillus_quiescens.annotations.txt"
+annotations_qui_df <- read.delim(file_path_qui, header = TRUE, sep = "\t")
+annotations_qui_df <- annotations_qui_df[, c("GeneID", "TranscriptID", "Feature", "Contig", "Start", "Stop", "Product", "BUSCO", "PFAM", "InterPro", "EggNog", "COG", "GO.Terms")] 
+sig_qui_genes_df <- annotations_qui_df[annotations_qui_df$GeneID %in% rownames(sig_genes_sorted), ]
+sig_qui_genes_df <- as.data.frame(sig_qui_genes_df[match(rownames(sig_genes_sorted), sig_qui_genes_df$GeneID), ])
+
+write_csv(annotations_umbo_df, "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/annotations_umbo_df.csv")
+```
+
+```{r, heatmap}
+install.packages("pheatmap")
+library("pheatmap")
+ntd <- normTransform(dds_quiescens)
+select <- order(rowMeans(counts(dds_pungens,normalized=TRUE)),
+                decreasing=TRUE)[1:20]
+
+df <- as.data.frame(colData(dds_pungens)[,c("wp")])
+
+df <- as.data.frame(colData(dds_pungens)[, c("wp")])
+
+
+rownames(df) <- colnames(assay(ntd))
+colnames(df) <- "Water Potential"
+
+pheatmap(assay(ntd)[select,], 
+         cluster_rows=FALSE, 
+         show_rownames=TRUE, 
+         cluster_cols=FALSE, 
+         annotation_col=df)
+
+subset(annotations_qui_df, GeneID == "FUN_001743")
+View(annotations_qui_df)
+
+library(DESeq2)
+library(pheatmap)
+
+## 1. Transform counts
+ntd <- normTransform(dds_pungens)
+res_pun_temp <- results(dds_pungens,
+                    contrast = c("temperature", "low", "high"))
+
+res_pun_temp <- res_pun_temp[!is.na(res_pun_temp$padj), ]
+res_sig <- res_pun_temp[res_pun_temp$padj < 0.05, ]      # adjust threshold if you want
+res_sig <- res_sig[order(abs(res_sig$log2FoldChange), decreasing = TRUE), ]
+select <- rownames(res_sig)[10:30]
+
+## 3. Annotation data frame
+df <- as.data.frame(colData(dds_pungens)[, "temperature", drop = FALSE])
+colnames(df) <- "Temperature"
+
+## 4. Order samples (columns) by treatment (wp)
+# If wp is numeric, this will sort numerically; if it's a factor, it uses factor levels.
+col_order <- order(df$`Temperature`)
+
+## 5. Reorder both matrix and annotation
+mat <- assay(ntd)[select, col_order, drop = FALSE]
+df_ordered <- df[col_order, , drop = FALSE]
+
+## 6. Heatmap with columns ordered by treatment
+pheatmap(mat,
+         cluster_rows = FALSE,
+         show_rownames = TRUE,
+         cluster_cols = FALSE,
+         annotation_col = df_ordered)
+samples
+```
+
+```{r, PCA}
+library(grid)
+######### TEMPERATURE ###########
+vsd <- vst(dds_pungens, blind=FALSE)
+colData(vsd)$temperature <- factor(colData(vsd)$temperature, levels = c("low", "medium", "high"))
+pca_data <- plotPCA(vsd, intgroup = c("temperature","wp"), returnData = TRUE)
+pca_data$wp <- factor(pca_data$wp, levels = c("low","medium","high"))
+ggplot(pca_data, aes(PC1, PC2, color = temperature, shape = wp)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c(low="blue", medium="gray", high="red")) +
+  scale_shape_manual(values = c(low = 16, medium = 17, high = 15)) +  # circle, triangle, square
+  theme_minimal() +
+  labs(title = "PCA by Temperature (shape = WP)", color = "Temperature", shape = "WP")
+
+
+
+vsd_qui <- vst(dds_quiescens, blind=FALSE)
+colData(vsd_qui)$temperature <- factor(colData(vsd_qui)$temperature, levels = c("low", "medium", "high"))
+pca_data_qui <- plotPCA(vsd_qui, intgroup = c("temperature"), returnData = TRUE)
+ggplot(pca_data_qui, aes(x = PC1, y = PC2, color = temperature)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("low" = "blue", "medium" = "gray", "high" = "red")) +
+  theme_minimal() +
+  labs(title = "PCA Plot by Temperature", color = "Temperature")
+
+vsd_umbo <- vst(dds_umbonatus, blind=FALSE)
+colData(vsd_umbo)$temperature <- factor(colData(vsd_umbo)$temperature, levels = c("low", "medium", "high"))
+pca_data_umbo <- plotPCA(vsd_umbo, intgroup = c("temperature"), returnData = TRUE)
+ggplot(pca_data_umbo, aes(x = PC1, y = PC2, color = temperature)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("low" = "blue", "medium" = "gray", "high" = "red")) +
+  theme_minimal() +
+  labs(title = "PCA Plot by Temperature", color = "Temperature")
+
+
+###### WP ##########
+vsd <- vst(dds_pungens, blind=FALSE)
+colData(vsd)$wp <- factor(colData(vsd)$wp, levels = c("low", "high"))
+pca_data <- plotPCA(vsd, intgroup = c("wp"), returnData = TRUE)
+ggplot(pca_data, aes(x = PC1, y = PC2, color = wp)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("low" = "blue", "medium" = "gray", "high" = "red")) +
+  theme_minimal() +
+  labs(title = "PCA Plot by WP", color = "wp")
+
+
+vsd <- vst(dds_quiescens, blind = FALSE)
+colData(vsd)$temperature <- factor(colData(vsd)$temperature, levels = c("low","medium","high"))
+pca_data <- plotPCA(vsd, intgroup = c("temperature","wp"), returnData = TRUE)
+pca_data$wp <- factor(pca_data$wp, levels = c("low","medium","high"))
+
+pv <- round(100 * attr(pca_data, "percentVar"), 1)  # e.g., c(PC1, PC2) in %
+
+ggplot(pca_data, aes(PC1, PC2, color = wp, shape = temperature)) +
+  geom_point(size = 3.2, stroke = 0.3) +
+  scale_color_manual(values = c(low = "#56B4E9", medium = "#009E73", high = "#D55E00")) +
+  scale_shape_manual(values = c(low = 16, medium = 17, high = 15)) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.key.height = unit(0.9, "lines")
+  ) +
+  labs(
+    title = "PCA (color = WP, shape = Temperature)",
+    color = "WP",
+    shape = "Temperature",
+    x = paste0("PC1 (", pv[1], "%)"),
+    y = paste0("PC2 (", pv[2], "%)")
+  )
+
+vsd <- vst(dds_umbonatus, blind = FALSE)
+colData(vsd)$temperature <- factor(colData(vsd)$temperature, levels = c("low","medium","high"))
+pca_data <- plotPCA(vsd, intgroup = c("temperature","wp"), returnData = TRUE)
+pca_data$wp <- factor(pca_data$wp, levels = c("low","medium","high"))
+
+pv <- round(100 * attr(pca_data, "percentVar"), 1)  # e.g., c(PC1, PC2) in %
+
+ggplot(pca_data, aes(PC1, PC2, color = wp, shape = temperature)) +
+  geom_point(size = 3.2, stroke = 0.3) +
+  scale_color_manual(values = c(low = "#56B4E9", medium = "#009E73", high = "#D55E00")) +
+  scale_shape_manual(values = c(low = 16, medium = 17, high = 15)) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.key.height = unit(0.9, "lines")
+  ) +
+  labs(
+    title = "PCA (color = WP, shape = Temperature)",
+    color = "WP",
+    shape = "Temperature",
+    x = paste0("PC1 (", pv[1], "%)"),
+    y = paste0("PC2 (", pv[2], "%)")
+  )
+vsd_qui <- vst(dds_quiescens, blind=FALSE)
+colData(vsd_qui)$wp <- factor(colData(vsd_qui)$wp, levels = c("low", "high"))
+pca_data_qui <- plotPCA(vsd_qui, intgroup = c("wp"), returnData = TRUE)
+ggplot(pca_data_qui, aes(x = PC1, y = PC2, color = wp)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("low" = "blue", "high" = "red")) +
+  theme_minimal() +
+  labs(title = "PCA Plot by WP", color = "wp")
+
+vsd_umbo <- vst(dds_umbonatus, blind=FALSE)
+colData(vsd_umbo)$wp <- factor(colData(vsd_umbo)$wp, levels = c("low", "high"))
+pca_data_umbo <- plotPCA(vsd_umbo, intgroup = c("wp"), returnData = TRUE)
+ggplot(pca_data_umbo, aes(x = PC1, y = PC2, color = wp)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("low" = "blue", "high" = "red")) +
+  theme_minimal() +
+  labs(title = "PCA Plot by WP", color = "wp")
+
+```
+
+```{r, Orthogroups}
+ortho <- as.data.frame(read.delim("/Users/jyeam/Documents/Genomes/Galaxy/Hierarchical_orthogroups.tsv", header = TRUE))
+names(ortho)[4] <- "pungens"
+names(ortho)[5] <- "quiescens"
+names(ortho)[6] <- "umbonatus"
+ortho
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(stringr)
+library(purrr)
+
+annotate_species <- function(ortho_df, species_col, anno_df, id_col = "TranscriptID", prefix = species_col) {
+  stopifnot(species_col %in% names(ortho_df))
+  stopifnot(id_col %in% names(anno_df))
+  anno_cols <- setdiff(names(anno_df), id_col)
+  expanded <- ortho_df %>%
+    select(OG, all_of(species_col)) %>%
+    mutate(across(all_of(species_col), as.character),
+           across(all_of(species_col), ~na_if(.x, "")),
+           across(all_of(species_col), ~str_replace_all(.x, "\\s+", ""))) %>%
+    separate_rows(!!sym(species_col), sep = ",") %>%
+    filter(!is.na(!!sym(species_col))) %>%
+    rename(!!id_col := !!sym(species_col))
+
+  # join annotations for this species
+  joined <- expanded %>%
+    left_join(anno_df, by = id_col)
+
+  # collapse back to one row per OG, prefixing columns
+  collapsed <- joined %>%
+    group_by(OG) %>%
+    summarise(
+      !!paste0(prefix, "_TranscriptIDs") := paste(unique(.data[[id_col]]), collapse = "; "),
+      across(all_of(anno_cols),
+             ~ paste(unique(na.omit(.x)), collapse = "; "),
+             .names = paste0(prefix, "_{.col}")),
+      .groups = "drop"
+    )
+
+  collapsed
+}
+
+pun_block <- annotate_species(ortho, "pungens",   annotations_pun_df, id_col = "TranscriptID", prefix = "pungens")
+qui_block <- annotate_species(ortho, "quiescens", annotations_qui_df, id_col = "TranscriptID", prefix = "quiescens")
+umb_block <- annotate_species(ortho, "umbonatus", annotations_umbo_df, id_col = "TranscriptID", prefix = "umbonatus")
+
+# Join them all back to the orthogroups table
+ortho_annotated <- list(ortho, pun_block, qui_block, umb_block) %>%
+  reduce(left_join, by = "OG")
+keep <- !grepl("^(pungens|quiescens|umbonatus)_(TranscriptIDs?|GeneID|Contig|Feature|start|stop|end)$",
+               names(ortho_annotated), ignore.case = TRUE)
+ortho_annotated <- ortho_annotated[, keep] ######################## THIS IS IT #####################################
+write_csv(ortho_annotated, "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/ortho_annotated.csv")
+
+make_map <- function(ortho, species_col, species_name) {
+  ortho %>%
+    select(OG, all_of(species_col)) %>%
+    mutate(across(all_of(species_col), as.character)) %>%
+    mutate(!!species_col := na_if(.data[[species_col]], "")) %>%
+    separate_rows(!!sym(species_col), sep = ",\\s*") %>%
+    filter(!is.na(.data[[species_col]])) %>%
+    rename(GENEID = !!sym(species_col)) %>%
+    mutate(species = species_name)
+}
+
+map_pun <- make_map(ortho_annotated, "pungens",   "pungens")
+map_qui <- make_map(ortho_annotated, "quiescens", "quiescens")
+map_umb <- make_map(ortho_annotated, "umbonatus", "umbonatus")
+
+norm_id <- function(x){
+  x %>%
+    as.character() %>%
+    str_trim() %>%
+    str_replace("\\.\\d+$","") %>%        # drop version suffix: .1, .2
+    str_replace("-RA$","") %>%            # drop isoform tag examples
+    str_replace("-T\\d+$","")             # drop transcript numeric tails if present
+}
+
+prep_map <- function(map_df, og_col = "OG", id_col = "GENEID", add_species = NULL){
+  out <- map_df
+  if (!("OG" %in% names(out)) && og_col %in% names(out))
+    out <- dplyr::rename(out, OG = !!og_col)
+  out[[id_col]] <- norm_id(out[[id_col]])
+  if (!is.null(add_species) && !("species" %in% names(out)))
+    out <- mutate(out, species = add_species)
+  out
+}
+
+map_pun2 <- prep_map(map_pun,  og_col = "OG", id_col="GENEID", add_species = "pungens")
+map_qui2 <- prep_map(map_qui,  og_col = "OG", id_col="GENEID", add_species = "quiescens")
+map_umb2 <- prep_map(map_umb,  og_col = "OG", id_col="GENEID", add_species = "umbonatus")
+
+one_species_genelevel <- function(dds, map_df, species, contrast_factor, lvl_A, lvl_B, use_species_in_join = TRUE){
+  res <- results(dds, contrast = c(contrast_factor, lvl_A, lvl_B)) %>%
+    as.data.frame() %>%
+    rownames_to_column("GENEID") %>%
+    mutate(GENEID = norm_id(GENEID),
+           species = species)
+
+  if (use_species_in_join && "species" %in% names(map_df)) {
+    out <- res %>% left_join(map_df %>% select(OG, GENEID, species), by = c("GENEID","species"))
+  } else {
+    out <- res %>% left_join(map_df %>% select(OG, GENEID), by = "GENEID")
+  }
+  out
+}
+
+res_pun_gene <- one_species_genelevel(dds_pungens,   map_pun2, "pungens",   contrast_factor="wp", lvl_A="high", lvl_B="low")
+res_qui_gene <- one_species_genelevel(dds_quiescens, map_qui2, "quiescens", contrast_factor="wp", lvl_A="high", lvl_B="low")
+res_umb_gene <- one_species_genelevel(dds_umbonatus, map_umb2, "umbonatus", contrast_factor="wp", lvl_A="high", lvl_B="low")
+
+res_gene_all <- dplyr::bind_rows(res_pun_gene, res_qui_gene, res_umb_gene)
+
+res_gene_all <- res_gene_all %>% filter(!is.na(OG))
+
+# collapse to one entry per (OG, species)
+res_gene_top <- res_gene_all %>%
+  group_by(OG, species) %>%
+  slice_min(padj, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+og_wide <- res_gene_top %>%
+  select(OG, species, log2FoldChange, padj, baseMean) %>%
+  pivot_wider(
+    names_from  = species,
+    values_from = c(log2FoldChange, padj, baseMean),
+    names_sep   = "."
+  )
+
+og_wide_annot <- og_wide %>%
+  left_join(
+    ortho_annotated %>%
+      select(OG,
+             starts_with("pungens_"),
+             starts_with("quiescens_"),
+             starts_with("umbonatus_")),
+    by = "OG"
+  )
+
+sig_thresh <- 0.05
+
+og_calls <- og_wide_annot %>%
+  mutate(
+    pun_sig  = ifelse(padj.pungens  < sig_thresh, sign(log2FoldChange.pungens), 0),
+    qui_sig  = ifelse(padj.quiescens< sig_thresh, sign(log2FoldChange.quiescens), 0),
+    umb_sig  = ifelse(padj.umbonatus< sig_thresh, sign(log2FoldChange.umbonatus), 0),
+    n_sig    = (pun_sig!=0) + (qui_sig!=0) + (umb_sig!=0),
+    # simple concordance label
+    concordance = case_when(
+      n_sig <= 1 ~ "≤1 species sig",
+      pun_sig==qui_sig & qui_sig==umb_sig & pun_sig!=0 ~ "all 3 same direction",
+      (pun_sig==qui_sig & pun_sig!=0 & umb_sig==0) |
+      (pun_sig==umb_sig & pun_sig!=0 & qui_sig==0) |
+      (qui_sig==umb_sig & qui_sig!=0 & pun_sig==0) ~ "2 species same dir",
+      TRUE ~ "discordant"
+    )
+  )
+
+ogs_in_all3 <- res_gene_all %>%
+  distinct(OG, species) %>%
+  count(OG) %>%
+  filter(n == 3) %>%
+  pull(OG)
+
+og_all3 <- og_calls %>% filter(OG %in% ogs_in_all3)
+write_csv(og_all3, "/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/Orthogroups_conserved3species.csv")
+
+og_calls %>%
+  count(concordance) %>%
+  ggplot(aes(concordance, n)) +
+  geom_col() + coord_flip() +
+  labs(x=NULL, y="Orthogroups", title="DE concordance across species")
+
+res_gene_top %>%
+  filter(species=="pungens") %>%
+  ggplot(aes(log2FoldChange, -log10(padj))) +
+  geom_point(alpha=0.6) +
+  geom_vline(xintercept=c(-1,1), linetype=2) +
+  geom_hline(yintercept=-log10(0.05), linetype=2) +
+  labs(title="pungens")
+
+res_gene_top_noNA <- res_gene_top[complete.cases(res_gene_top), ]
+
+############################ ANALYSIS #################################################
+#top OG groups diferentially epxressed to WP
+sig_thresh <- 0.05
+top_n_og   <- 50
+
+og_top_wp <- og_wide_annot %>%
+  mutate(
+    min_padj_wp = pmin(padj.pungens, padj.quiescens, padj.umbonatus, na.rm = TRUE),
+    n_sig_wp    = (padj.pungens  < sig_thresh) +
+                  (padj.quiescens< sig_thresh) +
+                  (padj.umbonatus< sig_thresh),
+    max_abs_lfc_wp = pmax(
+      abs(log2FoldChange.pungens),
+      abs(log2FoldChange.quiescens),
+      abs(log2FoldChange.umbonatus),
+      na.rm = TRUE
+    )
+  ) %>%
+  arrange(min_padj_wp, desc(n_sig_wp), desc(max_abs_lfc_wp)) %>%
+  slice_head(n = top_n_og)
+
+og_top_wp %>%
+  select(OG, min_padj_wp, n_sig_wp, max_abs_lfc_wp,
+         starts_with("pungens_"), starts_with("quiescens_"), starts_with("umbonatus_"))
+og_top_wp_all3 <- og_top_wp %>% filter(OG %in% ogs_in_all3)
+
+top_n_og <- 50
+
+# og_top_wp already sorted by min_padj_wp etc.
+top_ogs <- og_top_wp %>%
+  slice_head(n = top_n_og) %>%
+  pull(OG)
+lfc_mat <- og_wide %>%
+  filter(OG %in% top_ogs) %>%
+  # keep OG order consistent with top_ogs (optional but nice)
+  arrange(match(OG, top_ogs)) %>%
+  select(
+    OG,
+    log2FoldChange.pungens,
+    log2FoldChange.quiescens,
+    log2FoldChange.umbonatus
+  ) %>%
+  column_to_rownames("OG") %>%
+  as.matrix()
+
+# optional: nicer column names in the heatmap
+colnames(lfc_mat) <- c("pungens", "quiescens", "umbonatus")
+
+library(pheatmap)
+library(RColorBrewer)
+breaks <- seq(-2, 2, length.out = 201)
+my_colors <- colorRampPalette(rev(brewer.pal(11, "RdBu")))(200)
+max_lfc <- quantile(abs(lfc_mat), 0.95, na.rm = TRUE)  # ignore extreme 1%
+breaks  <- seq(-max_lfc, max_lfc, length.out = 201)
+
+pheatmap(
+  lfc_mat,
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  scale = "none",                 # true log2FC (no row scaling)
+  color = my_colors,
+  breaks = breaks,
+  main  = "Top orthogroups (log2FC, water potential)",
+  border_color = NA,
+  show_rownames = TRUE,          # cleaner when many OGs
+  fontsize_row = 6,
+  fontsize_col = 12,
+  angle_col = 45,                 # angled species labels
+  clustering_distance_rows = "euclidean",
+  clustering_distance_cols = "euclidean",
+  clustering_method = "complete"
+)
+
+```
+
+```{r, Venn diagram}
+sig_thresh <- 0.05
+
+# (Re)compute pun_sig etc. if needed
+og_calls <- og_wide_annot %>%
+  mutate(
+    pun_sig  = ifelse(padj.pungens   < sig_thresh, sign(log2FoldChange.pungens),   0),
+    qui_sig  = ifelse(padj.quiescens < sig_thresh, sign(log2FoldChange.quiescens), 0),
+    umb_sig  = ifelse(padj.umbonatus < sig_thresh, sign(log2FoldChange.umbonatus), 0)
+  )
+
+# Sets of OGs significantly UP (high WP > low WP)
+pun_up  <- og_calls %>% filter(pun_sig ==  1) %>% pull(OG) %>% unique()
+qui_up  <- og_calls %>% filter(qui_sig ==  1) %>% pull(OG) %>% unique()
+umb_up  <- og_calls %>% filter(umb_sig ==  1) %>% pull(OG) %>% unique()
+
+# Sets of OGs significantly DOWN (high WP < low WP; i.e. higher in low WP)
+pun_down <- og_calls %>% filter(pun_sig == -1) %>% pull(OG) %>% unique()
+qui_down <- og_calls %>% filter(qui_sig == -1) %>% pull(OG) %>% unique()
+umb_down <- og_calls %>% filter(umb_sig == -1) %>% pull(OG) %>% unique()
+data.frame(
+  species = c("pungens","quiescens","umbonatus"),
+  up   = c(length(pun_up),  length(qui_up),  length(umb_up)),
+  down = c(length(pun_down), length(qui_down), length(umb_down))
+)
+#### UPREGULATED ######
+a1 <- length(pun_up)
+a2 <- length(qui_up)
+a3 <- length(umb_up)
+
+n12 <- length(intersect(pun_up, qui_up))
+n13 <- length(intersect(pun_up, umb_up))
+n23 <- length(intersect(qui_up, umb_up))
+
+n123 <- length(Reduce(intersect, list(pun_up, qui_up, umb_up)))
+
+grid.newpage()
+draw.triple.venn(
+  area1 = a1, area2 = a2, area3 = a3,
+  n12 = n12, n23 = n23, n13 = n13, n123 = n123,
+  category = c("", "", ""),
+  fill = c("#88CCEE", "#44AA99", "#EE6677"),
+  alpha = 0.7,
+  lwd = 0.8,
+  col = "grey30",
+  cex = 1.3,
+  fontface = "bold",
+  cat.cex = 1.3,
+  cat.fontface = "bold",
+  cat.pos = c(-10, 10, 0),
+  cat.dist = c(0.055, 0.055, 0.055),
+  main = "Upregulated orthogroups (high WP vs low WP)"
+)
+
+
+
+
+###### DOWNREGULATED #########
+# areas
+b1 <- length(pun_down)
+b2 <- length(qui_down)
+b3 <- length(umb_down)
+
+m12 <- length(intersect(pun_down, qui_down))
+m13 <- length(intersect(pun_down, umb_down))
+m23 <- length(intersect(qui_down, umb_down))
+
+m123 <- length(Reduce(intersect, list(pun_down, qui_down, umb_down)))
+
+png("Venn_downregulated_orthogroups_wp.png", width = 1800, height = 1400, res = 300)
+grid.newpage()
+draw.triple.venn(
+  area1 = b1, area2 = b2, area3 = b3,
+  n12 = m12, n23 = m23, n13 = m13, n123 = m123,
+  category = c("", "", ""),
+  fill = c("#88CCEE", "#44AA99", "#EE6677"),
+  alpha = 0.7,
+  lwd = 0.8,
+  col = "grey30",
+  cex = 1.3,
+  fontface = "bold",
+  cat.cex = 1.3,
+  cat.fontface = "bold",
+  cat.pos = c(-10, 10, 0),
+  cat.dist = c(0.055, 0.055, 0.055),
+  main = "Downregulated orthogroups (high WP vs low WP)"
+)
+dev.off()
+
+```
+
+```{r, PCA with Orthologs}
+# 1) Build per-contrast result tables (wp already done)
+res_pun_wp  <- res_pun_gene  %>% mutate(contrast="wp")
+res_qui_wp  <- res_qui_gene  %>% mutate(contrast="wp")
+res_umb_wp  <- res_umb_gene  %>% mutate(contrast="wp")
+
+## 2) ALSO compute temperature contrast for each species (edit levels if needed)
+res_pun_temp <- one_species_genelevel(dds_pungens,   map_pun2, "pungens",
+                                      contrast_factor="temperature", lvl_A="high", lvl_B="low") %>%
+                mutate(contrast="temperature")
+res_qui_temp <- one_species_genelevel(dds_quiescens, map_qui2, "quiescens",
+                                      contrast_factor="temperature", lvl_A="high", lvl_B="low") %>%
+                mutate(contrast="temperature")
+res_umb_temp <- one_species_genelevel(dds_umbonatus, map_umb2, "umbonatus",
+                                      contrast_factor="temperature", lvl_A="high", lvl_B="low") %>%
+                mutate(contrast="temperature")
+
+## 3) Bind everything
+res_gene_all <- bind_rows(res_pun_wp, res_qui_wp, res_umb_wp,
+                          res_pun_temp, res_qui_temp, res_umb_temp)
+
+## 4) Keep orthogroups present in all 3 species
+ogs_all3 <- res_gene_all %>%
+  filter(!is.na(OG)) %>%
+  distinct(OG, species) %>%
+  count(OG, name="n_species") %>%
+  filter(n_species==3) %>%
+  pull(OG)
+
+res_gene_all_all3 <- res_gene_all %>% filter(OG %in% ogs_all3)
+
+## 5) One value per (OG, species, contrast), then pivot to features
+lfc_wide <- res_gene_all_all3 %>%
+  group_by(OG, species, contrast) %>%
+  slice_min(padj, n=1, with_ties=FALSE) %>%   # pick most significant gene if duplicates
+  ungroup() %>%
+  select(OG, species, contrast, log2FoldChange) %>%
+  pivot_wider(names_from=contrast, values_from=log2FoldChange, names_prefix="lfc_") %>%
+  tidyr::drop_na()                             # ensure both lfc_wp & lfc_temperature exist
+
+## 6) PCA
+X <- as.matrix(lfc_wide %>% select(starts_with("lfc_")))
+pc <- prcomp(X, center=TRUE, scale.=TRUE)
+pv <- round(100*(pc$sdev^2)/sum(pc$sdev^2), 1)
+scores <- cbind(lfc_wide %>% select(OG, species), as.data.frame(pc$x))
+
+## 7) Plot (color = species)
+ggplot(scores, aes(PC1, PC2, color=species)) +
+  geom_point(size=3, alpha=0.95) +
+  scale_color_manual(values=c(pungens="#56B4E9", quiescens="#009E73", umbonatus="#D55E00")) +
+  theme_minimal() +
+  labs(title="PCA of orthogroup log2 fold changes (shared in all 3)",
+       x=paste0("PC1 (", pv[1], "%)"),
+       y=paste0("PC2 (", pv[2], "%)"),
+       color="Species")
+```
+
+```{r, test}
+vsd_pun <- vst(dds_pungens,   blind = FALSE)
+vsd_qui <- vst(dds_quiescens, blind = FALSE)
+vsd_umb <- vst(dds_umbonatus, blind = FALSE)
+
+mat_pun <- assay(vsd_pun)
+mat_qui <- assay(vsd_qui)
+mat_umb <- assay(vsd_umb)
+keep_pun <- rownames(mat_pun) %in% map_pun2$GENEID
+keep_qui <- rownames(mat_qui) %in% map_qui2$GENEID
+keep_umb <- rownames(mat_umb) %in% map_umb2$GENEID
+
+mat_pun <- mat_pun[keep_pun, ]
+mat_qui <- mat_qui[keep_qui, ]
+mat_umb <- mat_umb[keep_umb, ]
+
+# map gene -> OG
+og_pun <- map_pun2$OG[match(rownames(mat_pun), map_pun2$GENEID)]
+og_qui <- map_qui2$OG[match(rownames(mat_qui), map_qui2$GENEID)]
+og_umb <- map_umb2$OG[match(rownames(mat_umb), map_umb2$GENEID)]
+
+agg_by_og <- function(mat, og_vec) {
+  stopifnot(nrow(mat) == length(og_vec))  # sanity check
+
+  df <- as.data.frame(mat)
+  df$OG <- og_vec
+
+  df %>%
+    filter(!is.na(OG)) %>%
+    group_by(OG) %>%
+    # take the mean per orthogroup for all numeric columns (i.e., samples)
+    summarise(across(where(is.numeric), mean), .groups = "drop") %>%
+    column_to_rownames("OG")
+}
+
+og_mat_pun <- agg_by_og(mat_pun, og_pun)
+og_mat_qui <- agg_by_og(mat_qui, og_qui)
+og_mat_umb <- agg_by_og(mat_umb, og_umb)
+
+ogs_all3 <- Reduce(
+  intersect,
+  list(rownames(og_mat_pun), rownames(og_mat_qui), rownames(og_mat_umb))
+)
+length(ogs_all3)
+
+# subset and align row order
+og_mat_pun <- og_mat_pun[ogs_all3, ]
+og_mat_qui <- og_mat_qui[ogs_all3, ]
+og_mat_umb <- og_mat_umb[ogs_all3, ]
+
+# keep original sample names for reference
+orig_pun <- colnames(og_mat_pun)
+orig_qui <- colnames(og_mat_qui)
+orig_umb <- colnames(og_mat_umb)
+
+colnames(og_mat_pun) <- paste0("pun_", orig_pun)
+colnames(og_mat_qui) <- paste0("qui_", orig_qui)
+colnames(og_mat_umb) <- paste0("umb_", orig_umb)
+
+expr_og_all <- cbind(
+  og_mat_pun,
+  og_mat_qui,
+  og_mat_umb
+)   # rows = OG, cols = all samples
+
+# sample info for plotting
+library(dplyr)
+
+samples_pun <- data.frame(
+  sample      = colnames(og_mat_pun),
+  species     = "pungens",
+  orig_sample = orig_pun
+)
+samples_qui <- data.frame(
+  sample      = colnames(og_mat_qui),
+  species     = "quiescens",
+  orig_sample = orig_qui
+)
+samples_umb <- data.frame(
+  sample      = colnames(og_mat_umb),
+  species     = "umbonatus",
+  orig_sample = orig_umb
+)
+
+sample_info <- bind_rows(samples_pun, samples_qui, samples_umb)
+
+# transpose: now rows = samples, columns = OGs
+X <- t(expr_og_all)
+
+pc <- prcomp(X, center = TRUE, scale. = TRUE)
+
+# variance explained for axis labels
+pv <- round(100 * (pc$sdev^2) / sum(pc$sdev^2), 1)
+
+scores <- as.data.frame(pc$x)
+scores$sample <- rownames(scores)
+
+scores <- left_join(scores, sample_info, by = "sample")
+
+
+ggplot(scores, aes(PC1, PC2, color = species)) +
+  geom_point(size = 3, alpha = 0.9) +
+  scale_color_manual(values = c(
+    pungens   = "#56B4E9",
+    quiescens = "#009E73",
+    umbonatus = "#D55E00"
+  )) +
+  theme_minimal() +
+  labs(
+    title = "PCA of conserved orthogroup expression (vst; points = samples)",
+    x = paste0("PC1 (", pv[1], "%)"),
+    y = paste0("PC2 (", pv[2], "%)"),
+    color = "Species"
+  )
+ggplot(scores, aes(PC1, PC2, color = species, label = orig_sample)) +
+    geom_point(size = 3) +
+    geom_text(nudge_y = 0.2)
+ggplot(scores, aes(PC1, PC2, color = species)) + geom_point(size = 3)
+```
+
+```{r, Summary othologous genes}
+og_df <- ortho_annotated %>%
+  select(OG, pungens, quiescens, umbonatus) %>%
+  mutate(
+    has_pun = !is.na(pungens)   & str_trim(pungens)   != "",
+    has_qui = !is.na(quiescens) & str_trim(quiescens) != "",
+    has_umb = !is.na(umbonatus) & str_trim(umbonatus) != "",
+    n_species = has_pun + has_qui + has_umb
+  )
+
+# ---- simple counts ----
+n_all3     <- og_df %>% filter(n_species == 3) %>% nrow()                      # present in all 3
+n_unique_p <- og_df %>% filter(n_species == 1, has_pun) %>% nrow()             # unique to pungens
+n_unique_q <- og_df %>% filter(n_species == 1, has_qui) %>% nrow()             # unique to quiescens
+n_unique_u <- og_df %>% filter(n_species == 1, has_umb) %>% nrow()             # unique to umbonatus
+
+n_pq_only  <- og_df %>% filter(n_species == 2, has_pun, has_qui) %>% nrow()    # only pungens & quiescens
+n_pu_only  <- og_df %>% filter(n_species == 2, has_pun, has_umb) %>% nrow()    # only pungens & umbonatus
+n_qu_only  <- og_df %>% filter(n_species == 2, has_qui, has_umb) %>% nrow()    # only quiescens & umbonatus
+
+# Optional: a neat summary table
+summary_tbl <- tibble::tibble(
+  category = c("All three", 
+               "Unique: pungens", "Unique: quiescens", "Unique: umbonatus",
+               "Shared only: pungens+quiescens", "Shared only: pungens+umbonatus", "Shared only: quiescens+umbonatus"),
+  count    = c(n_all3, n_unique_p, n_unique_q, n_unique_u, n_pq_only, n_pu_only, n_qu_only)
+)
+
+summary_tbl
+
+ogs_all3      <- og_df %>% filter(n_species == 3) %>% pull(OG)
+ogs_unique_p  <- og_df %>% filter(n_species == 1, has_pun) %>% pull(OG)
+ogs_unique_q  <- og_df %>% filter(n_species == 1, has_qui) %>% pull(OG)
+ogs_unique_u  <- og_df %>% filter(n_species == 1, has_umb) %>% pull(OG)
+ogs_pq_only   <- og_df %>% filter(n_species == 2, has_pun, has_qui) %>% pull(OG)
+ogs_pu_only   <- og_df %>% filter(n_species == 2, has_pun, has_umb) %>% pull(OG)
+ogs_qu_only   <- og_df %>% filter(n_species == 2, has_qui, has_umb) %>% pull(OG)
+
+install.packages("VennDiagram")
+library(VennDiagram)
+library(grid)
+
+# --- your summary counts ---
+summary_tbl <- data.frame(
+  category = c("All three",
+               "Unique: pungens", "Unique: quiescens", "Unique: umbonatus",
+               "pungens+quiescens", "pungens+umbonatus", "quiescens+umbonatus"),
+  n = c(7269, 153, 68, 403, 383, 783, 1011)
+)
+
+# unpack for convenience
+n123 <- summary_tbl$n[summary_tbl$category == "All three"]
+u_p  <- summary_tbl$n[summary_tbl$category == "Unique: pungens"]
+u_q  <- summary_tbl$n[summary_tbl$category == "Unique: quiescens"]
+u_u  <- summary_tbl$n[summary_tbl$category == "Unique: umbonatus"]
+pq_o <- summary_tbl$n[summary_tbl$category == "pungens+quiescens"]
+pu_o <- summary_tbl$n[summary_tbl$category == "pungens+umbonatus"]
+qu_o <- summary_tbl$n[summary_tbl$category == "quiescens+umbonatus"]
+
+# VennDiagram::draw.triple.venn needs totals and pairwise intersections (including the triple)
+area1 <- u_p + pq_o + pu_o + n123    # pungens total
+area2 <- u_q + pq_o + qu_o + n123    # quiescens total
+area3 <- u_u + pu_o + qu_o + n123    # umbonatus total
+n12   <- pq_o + n123                  # pun ∩ qui
+n13   <- pu_o + n123                  # pun ∩ umb
+n23   <- qu_o + n123                  # qui ∩ umb
+
+# quick sanity check (optional)
+stopifnot(area1 > 0, area2 > 0, area3 > 0)
+
+# draw to screen
+grid.newpage()
+venn.plot <- draw.triple.venn(
+  area1 = area1, area2 = area2, area3 = area3,
+  n12 = n12, n23 = n23, n13 = n13, n123 = n123,
+  category = c("pungens", "quiescens", "umbonatus"),
+  fill = c("#A6CEE3", "#B2DF8A", "#FB9A99"),
+  alpha = 0.6, lty = "blank", cex = 1.2, cat.cex = 1.2
+)
+
+# save to file (optional)
+png("/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/output_figures/orthogroups_venn_counts.png", width = 1200, height = 900, res = 200)
+grid.newpage()
+draw.triple.venn(
+  area1 = area1, area2 = area2, area3 = area3,
+  n12 = n12, n23 = n23, n13 = n13, n123 = n123,
+  category = c("pungens", "quiescens", "umbonatus"),
+  fill = c("#A6CEE3", "#B2DF8A", "#FB9A99"),
+  alpha = 0.6, lty = "blank", cex = 1.2, cat.cex = 1.2
+)
+dev.off()
+
+
+
+
+########UPREGULATION AND DOWNREGULATION DIAGRAMS ################################
+library(dplyr)
+
+sig_thresh <- 0.05
+
+# clean out obvious NAs
+res_gene_top_clean <- res_gene_top %>%
+  filter(!is.na(OG),
+         !is.na(padj),
+         !is.na(log2FoldChange))
+
+# helper function: given a species name, return OGs that are sig up/down
+get_up_down_ogs <- function(df, species_name, padj_cutoff = 0.05) {
+  df_sp <- df %>% filter(species == species_name)
+
+  ogs_up <- df_sp %>%
+    filter(padj < padj_cutoff, log2FoldChange > 0) %>%
+    pull(OG) %>%
+    unique()
+
+  ogs_down <- df_sp %>%
+    filter(padj < padj_cutoff, log2FoldChange < 0) %>%
+    pull(OG) %>%
+    unique()
+
+  list(up = ogs_up, down = ogs_down)
+}
+
+pun_sets <- get_up_down_ogs(res_gene_top_clean, "pungens",   sig_thresh)
+qui_sets <- get_up_down_ogs(res_gene_top_clean, "quiescens", sig_thresh)
+umb_sets <- get_up_down_ogs(res_gene_top_clean, "umbonatus", sig_thresh)
+
+pun_up  <- pun_sets$up
+qui_up  <- qui_sets$up
+umb_up  <- umb_sets$up
+
+pun_down <- pun_sets$down
+qui_down <- qui_sets$down
+umb_down <- umb_sets$down
+
+a1 <- length(pun_up)
+a2 <- length(qui_up)
+a3 <- length(umb_up)
+
+# pairwise intersections
+n12 <- length(intersect(pun_up, qui_up))
+n13 <- length(intersect(pun_up, umb_up))
+n23 <- length(intersect(qui_up, umb_up))
+
+# triple intersection
+n123 <- length(Reduce(intersect, list(pun_up, qui_up, umb_up)))
+
+# sanity check
+stopifnot(a1 >= n12, a2 >= n12, a3 >= n13, a3 >= n23)
+####UPREGULATED #########
+grid.newpage()
+draw.triple.venn(
+  area1 = a1, area2 = a2, area3 = a3,
+  n12 = n12, n23 = n23, n13 = n13, n123 = n123,
+  category = c("pungens", "quiescens", "umbonatus"),
+  fill = c("#88CCEE", "#44AA99", "#EE6677"),
+  alpha = 0.7,
+  lwd = 0.8,
+  col = "grey30",
+  cex = 1.3,
+  fontface = "bold",
+  cat.cex = 1.3,
+  cat.fontface = "bold",
+  main = "Upregulated orthogroups (high WP vs low WP)"
+)
+##### DOWN REGULATED #######
+# areas
+b1 <- length(pun_down)
+b2 <- length(qui_down)
+b3 <- length(umb_down)
+
+# pairwise intersections
+m12 <- length(intersect(pun_down, qui_down))
+m13 <- length(intersect(pun_down, umb_down))
+m23 <- length(intersect(qui_down, umb_down))
+
+# triple intersection
+m123 <- length(Reduce(intersect, list(pun_down, qui_down, umb_down)))
+
+png("Venn_downregulated_orthogroups_wp.png", width = 1800, height = 1400, res = 300)
+grid.newpage()
+draw.triple.venn(
+  area1 = b1, area2 = b2, area3 = b3,
+  n12 = m12, n23 = m23, n13 = m13, n123 = m123,
+  category = c("pungens", "quiescens", "umbonatus"),
+  fill = c("#88CCEE", "#44AA99", "#EE6677"),
+  alpha = 0.7,
+  lwd = 0.8,
+  col = "grey30",
+  cex = 1.3,
+  fontface = "bold",
+  cat.cex = 1.3,
+  cat.fontface = "bold",
+  main = "Downregulated orthogroups (high WP vs low WP)"
+)
+
+
+```
+
+```{r, GxE}
+geno_pheno_df
+normalized_counts_pun <- counts(dds_pungens, normalized = TRUE)
+gene_expression_pun_df <- as.data.frame(t(normalized_counts_pun))
+normalized_counts_qui <- counts(dds_quiescens, normalized = TRUE)
+gene_expression_qui_df <- as.data.frame(t(normalized_counts_qui))
+normalized_counts_umbo <- counts(dds_umbonatus, normalized = TRUE)
+gene_expression_umbo_df <- as.data.frame(t(normalized_counts_umbo))
+
+# add phenotype column in the same row order as gene_expression_pun_df
+gene_expression_pun_df$Dried.Weight.Week <- geno_pheno_df$Dried.Weight.Week[match(rownames(gene_expression_pun_df), geno_pheno_df$Admera_ID)]
+gene_expression_pun_df$Temperature <- geno_pheno_df$Temperature[match(rownames(gene_expression_pun_df), geno_pheno_df$Admera_ID)]
+# Move Dried.Weight.Week to the first column
+gene_expression_pun_df <- gene_expression_pun_df[, c("Dried.Weight.Week", setdiff(names(gene_expression_pun_df), "Dried.Weight.Week"))]
+gene_expression_pun_df <- gene_expression_pun_df[, c("Temperature", setdiff(names(gene_expression_pun_df), "Temperature"))]
+gene_expression_pun_df <- na.omit(gene_expression_pun_df)
+
+growth_rate <- gene_expression_pun_df$Dried.Weight.Week
+temp <- gene_expression_pun_df$Temperature
+gene_expression_data <- gene_expression_pun_df[, -1]  # Remove growth rate column
+
+# View the results
+head(results_high_temp_df)
+# Ensure growth_rate is numeric (if it's not already)
+growth_rate <- as.numeric(growth_rate)
+
+results <- apply(gene_expression_pun_df, 2, function(gene_expr) {
+  model <- lm(gene_expr ~ growth_rate)
+  summary(model)$coefficients[2, c(1, 4)]  # Get coefficient and p-value for growth rate
+})
+
+
+results_df <- data.frame(Gene = colnames(gene_expression_pun_df), 
+                         Coefficient = results[1, ], 
+                         P_Value = results[2, ])
+head(results_df)
+ggplot(results_df, aes(x = reorder(Gene, Coefficient), y = Coefficient)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +  # Flip coordinates to make gene names readable
+  labs(title = "Linear Regression Coefficients for Genes vs Growth Rate",
+       x = "Gene", y = "Coefficient") +
+  theme_minimal()
+
+samples
+```
+
+```{r, extras}
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(readr)
+
+ortho_annot <- read.csv("/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/ortho_annotated.csv")
+og_conserved <- read.csv("/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/Orthogroups_conserved3species.csv")
+sample_phenotypes_df <- read.csv("/Users/jyeam/Documents/Projects/2024_Stress_Tolerance/R/sample_phenotypes_df.csv")
+
+
+# Re-use your ID normalizer
+norm_id <- function(x){
+  x %>%
+    as.character() %>%
+    str_trim() %>%
+    str_replace("\\.\\d+$","") %>%        # drop version suffix: .1, .2
+    str_replace("-RA$","") %>%            # drop isoform tags
+    str_replace("-T\\d+$","")             # drop transcript suffixes
+}
+make_map <- function(ortho, species_col, species_name) {
+  ortho %>%
+    select(OG, all_of(species_col)) %>%
+    mutate(across(all_of(species_col), as.character)) %>%
+    mutate(!!species_col := na_if(.data[[species_col]], "")) %>%
+    separate_rows(!!sym(species_col), sep = ",\\s*") %>%
+    filter(!is.na(.data[[species_col]])) %>%
+    rename(GENEID = !!sym(species_col)) %>%
+    mutate(
+      GENEID = norm_id(GENEID),
+      species = species_name
+    )
+}
+map_pun <- make_map(ortho_annot, "pungens",   "pungens")
+map_qui <- make_map(ortho_annot, "quiescens", "quiescens")
+map_umb <- make_map(ortho_annot, "umbonatus", "umbonatus")
+
+map_all <- bind_rows(map_pun, map_qui, map_umb)
+# map_all: OG, GENEID, species
+
+# Create count matrix for pungens, quiescens, and umbo and then concatenate them all into one
+counts_pun <- counts(dds_pungens, normalized = FALSE) %>% # 1) Extract raw counts and normalize gene IDs
+  as.data.frame() %>%
+  rownames_to_column("GENEID") %>%
+  mutate(GENEID = norm_id(GENEID))
+pun_with_og <- counts_pun %>% # 2) Join to OG mapping
+  inner_join(map_pun2 %>% select(OG, GENEID), by = "GENEID")
+counts_pun_og_df <- pun_with_og %>% # 3) Sum counts per orthogroup
+  group_by(OG) %>%
+  summarise(across(where(is.numeric), sum), .groups = "drop")
+counts_pun_og <- counts_pun_og_df %>% # 4) Make a matrix with OG as rownames
+  column_to_rownames("OG") %>%
+  as.matrix()
+
+# Quiescens
+counts_qui <- counts(dds_quiescens, normalized = FALSE) %>%
+  as.data.frame() %>%
+  rownames_to_column("GENEID") %>%
+  mutate(GENEID = norm_id(GENEID))
+qui_with_og <- counts_qui %>%
+  inner_join(map_qui2 %>% select(OG, GENEID), by = "GENEID")
+counts_qui_og_df <- qui_with_og %>%
+  group_by(OG) %>%
+  summarise(across(where(is.numeric), sum), .groups = "drop")
+counts_qui_og <- counts_qui_og_df %>%
+  column_to_rownames("OG") %>%
+  as.matrix()
+
+# Umbonatus
+counts_umb <- counts(dds_umbonatus, normalized = FALSE) %>%
+  as.data.frame() %>%
+  rownames_to_column("GENEID") %>%
+  mutate(GENEID = norm_id(GENEID))
+umb_with_og <- counts_umb %>%
+  inner_join(map_umb2 %>% select(OG, GENEID), by = "GENEID")
+counts_umb_og_df <- umb_with_og %>%
+  group_by(OG) %>%
+  summarise(across(where(is.numeric), sum), .groups = "drop")
+counts_umb_og <- counts_umb_og_df %>%
+  column_to_rownames("OG") %>%
+  as.matrix()
+
+# Option: keep all OGs that appear in at least one species
+all_ogs <- sort(unique(c(
+  rownames(counts_pun_og),
+  rownames(counts_qui_og),
+  rownames(counts_umb_og)
+)))
+
+# Function to pad a matrix with missing OGs (fill 0s)
+pad_ogs <- function(mat, ogs) {
+  missing_ogs <- setdiff(ogs, rownames(mat))
+  if (length(missing_ogs) > 0) {
+    pad_mat <- matrix(0L, nrow = length(missing_ogs), ncol = ncol(mat),
+                      dimnames = list(missing_ogs, colnames(mat)))
+    mat <- rbind(mat, pad_mat)
+  }
+  mat[ogs, , drop = FALSE]  # order rows by all_ogs
+}
+
+counts_pun_og2 <- pad_ogs(counts_pun_og, all_ogs)
+counts_qui_og2 <- pad_ogs(counts_qui_og, all_ogs)
+counts_umb_og2 <- pad_ogs(counts_umb_og, all_ogs)
+
+# Now cbind columns
+counts_og <- cbind(counts_pun_og2, counts_qui_og2, counts_umb_og2)
+
+################################################################################
+
+coldata <- sample_phenotypes_df %>%
+  mutate(
+    # harmonize species labels to match your 3 species
+    species = case_when(
+      str_detect(Species, "pungens")   ~ "pungens",
+      Species == "quiescens"          ~ "quiescens",
+      Species == "umbonatus"          ~ "umbonatus",
+      TRUE                            ~ Species
+    ),
+    # WP: make factor. Put "low" first so contrasts are high vs low
+    WP = factor(WP, levels = c("low", "high")),
+    # growth: numeric column for growth rate / biomass
+    growth = as.numeric(Dried.Weight.Week),
+    # optional: add batch/temperature if you want to adjust for them
+    batch = factor(Batch) %||% factor(1),
+    temp  = factor(Temperature)
+  ) %>%
+  select(Admera_ID, species, WP, growth, batch, temp) %>%
+  column_to_rownames("Admera_ID")
+stopifnot(all(colnames(counts_og) %in% rownames(coldata)))
+coldata <- coldata[colnames(counts_og), ]
+
+
+library(DESeq2)
+#Create Deseq2 Object
+coldata$growth <- scale(coldata$growth, center = TRUE, scale = TRUE)
+dds_og <- DESeqDataSetFromMatrix(
+  countData = counts_og,
+  colData   = coldata,
+  design    = ~ species + WP + growth  # will update for interactions below
+)
+
+#G×E for water potential: species × WP
+dds_gxe_wp <- dds_og
+design(dds_gxe_wp) <- ~ species + WP + species:WP
+
+dds_gxe_wp <- DESeq(dds_gxe_wp, test = "LRT",
+                    reduced = ~ species + WP)
+
+res_gxe_wp <- results(dds_gxe_wp)
+res_gxe_wp_df <- as.data.frame(res_gxe_wp) %>%
+  rownames_to_column("OG")
+
+sig_gxe_wp <- res_gxe_wp_df %>%
+  filter(!is.na(padj), padj < 0.05)
+
+#G×E for growth: species × growth
+dds_gxe_growth <- dds_og
+design(dds_gxe_growth) <- ~ species + WP + growth + species:growth
+
+dds_gxe_growth <- DESeq(dds_gxe_growth, test = "LRT",
+                        reduced = ~ species + WP + growth)
+
+res_gxe_growth <- results(dds_gxe_growth)
+res_gxe_growth_df <- as.data.frame(res_gxe_growth) %>%
+  rownames_to_column("OG")
+
+sig_gxe_growth <- res_gxe_growth_df %>%
+  filter(!is.na(padj), padj < 0.05)
+
+#G×E for growth: species × growth
+dds_gxe_growth <- dds_og
+design(dds_gxe_growth) <- ~ species + WP + growth + species:growth
+
+dds_gxe_growth <- DESeq(dds_gxe_growth, test = "LRT",
+                        reduced = ~ species + WP + growth)
+
+res_gxe_growth <- results(dds_gxe_growth)
+res_gxe_growth_df <- as.data.frame(res_gxe_growth) %>%
+  rownames_to_column("OG")
+
+sig_gxe_growth <- res_gxe_growth_df %>%
+  filter(!is.na(padj), padj < 0.05)
+
+#Both
+dds_both <- dds_og
+design(dds_both) <- ~ species + WP + growth + species:WP + species:growth
+
+dds_both <- DESeq(dds_both, test = "LRT",
+                  reduced = ~ species + WP + growth)
+
+res_gxe_both <- results(dds_both)
+res_gxe_both_df <- as.data.frame(res_gxe_both) %>%
+  rownames_to_column("OG")
+
+#WP G×E only (control for growth G×E):
+dds_wp_only <- dds_both
+dds_wp_only <- DESeq(dds_wp_only, test = "LRT",
+                     reduced = ~ species + WP + growth + species:growth)
+
+res_gxe_wp_only <- as.data.frame(results(dds_wp_only)) %>%
+  rownames_to_column("OG")
+
+#Growth G×E only:
+dds_growth_only <- dds_both
+dds_growth_only <- DESeq(dds_growth_only, test = "LRT",
+                         reduced = ~ species + WP + growth + species:WP)
+res_gxe_growth_only <- as.data.frame(results(dds_growth_only)) %>%
+  rownames_to_column("OG")
+#WP (categorical high vs low)
+#Growth (continuous)
+dds_growth_wald <- dds_og
+design(dds_growth_wald) <- ~ species + WP + growth + species:growth
+dds_growth_wald <- DESeq(dds_growth_wald)
+resultsNames(dds_growth_wald)
+```
+
+```{r, GxE plots}
+gxe_wp_annot <- res_gxe_wp_df %>%
+  left_join(ortho_annotated, by = "OG")
+
+# Top WP G×E hits
+gxe_wp_top <- gxe_wp_annot %>%
+  filter(!is.na(padj)) %>%
+  arrange(padj) %>%
+  slice_head(n = 50)
+
+gxe_wp_top %>% select(OG, stat, pvalue, padj) %>% print(n = 10)
+
+res_gxe_growth_only <- as.data.frame(results(dds_growth_only)) %>%
+  rownames_to_column("OG")
+gxe_growth_annot <- res_gxe_growth_df %>%
+  left_join(ortho_annotated, by = "OG")
+
+gxe_growth_top <- gxe_growth_annot %>%
+  filter(!is.na(padj)) %>%
+  arrange(padj) %>%
+  slice_head(n = 50)
+
+gxe_growth_top %>% select(OG, stat, pvalue, padj) %>% print(n = 10)
+
+vsd_wp <- vst(dds_gxe_wp, blind = FALSE)
+vsd_mat_wp <- assay(vsd_wp)
+
+plot_og_wp <- function(og_id, vsd_mat, coldata){
+  stopifnot(og_id %in% rownames(vsd_mat))
+  
+  plot_df <- data.frame(
+    expr   = vsd_mat[og_id, ],
+    sample = colnames(vsd_mat)
+  ) %>%
+    left_join(as.data.frame(coldata) %>%
+                rownames_to_column("sample"),
+              by = "sample")
+  
+  ggplot(plot_df, aes(x = WP, y = expr, color = species)) +
+    geom_jitter(width = 0.1, size = 2) +
+    stat_summary(fun = mean, geom = "line", aes(group = species),
+                 position = position_dodge(width = 0.2)) +
+    labs(
+      title = paste("G×E WP for", og_id),
+      y = "VST expression"
+    ) +
+    theme_bw()
+}
+
+top_og_wp <- gxe_wp_top$OG[4]
+top_og_wp
+#Plot the top WP G×E orthogroup
+plot_og_wp(top_og_wp, vsd_mat_wp, coldata)
+
+#Plot top Growth GxE orthogroup
+vsd_growth <- vst(dds_gxe_growth, blind = FALSE)
+vsd_mat_growth <- assay(vsd_growth)
+
+plot_og_growth <- function(og_id, vsd_mat, coldata){
+  stopifnot(og_id %in% rownames(vsd_mat))
+  
+  plot_df <- data.frame(
+    expr   = vsd_mat[og_id, ],
+    sample = colnames(vsd_mat)
+  ) %>%
+    left_join(as.data.frame(coldata) %>%
+                rownames_to_column("sample"),
+              by = "sample")
+  
+  ggplot(plot_df, aes(x = growth, y = expr, color = species)) +
+    geom_point(size = 2) +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(
+      title = paste("G×E growth for", og_id),
+      x = "Growth",
+      y = "VST expression"
+    ) +
+    theme_bw()
+}
+
+top_og_growth <- gxe_growth_top$OG[1]
+top_og_growth
+
+plot_og_growth(top_og_growth, vsd_mat_growth, coldata)
+
+
+library(readr)
+og_conserved_gxe_wp <- og_conserved %>%
+  left_join(res_gxe_wp_df %>% select(OG, stat, pvalue, padj),
+            by = "OG",
+            suffix = c("", ".gxe_wp"))
+
+og_conserved_gxe_growth <- og_conserved %>%
+  left_join(res_gxe_growth_df %>% select(OG, stat, pvalue, padj),
+            by = "OG",
+            suffix = c("", ".gxe_growth"))
+
+og_conserved_gxe_wp %>%
+  count(concordance, cut(padj, c(0, 0.05, 0.1, 1)),
+        name = "n_OGs")
+
+# Use the LRT statistic as ranking
+ranks_wp <- res_gxe_wp_df$stat
+names(ranks_wp) <- res_gxe_wp_df$OG
+ranks_wp <- sort(ranks_wp, decreasing = TRUE)
+
+
+```
+
+```{r, GSEA}
+library(dplyr)
+library(tidyr)
+library(stringr)
+
+# 1) Gather all GO columns from all three fungi
+og_go_long <- ortho_annotated %>%
+  select(OG,
+         pungens_GO.Terms,
+         quiescens_GO.Terms,
+         umbonatus_GO.Terms) %>%
+  pivot_longer(
+    cols      = -OG,
+    names_to  = "species_go_col",
+    values_to = "GO_terms"
+  ) %>%
+  # drop missing / empty
+  filter(!is.na(GO_terms), GO_terms != "") %>%
+  # split multiple GO terms (assuming ; or , separators)
+  mutate(GO_terms = str_split(GO_terms, pattern = "[;,]\\s*")) %>%
+  tidyr::unnest(GO_terms) %>%
+  mutate(GO_terms = str_trim(GO_terms)) %>%
+  filter(GO_terms != "")
+
+# Quick sanity check
+og_go_long %>% head()
+length(unique(og_go_long$OG))
+length(unique(og_go_long$GO_terms))
+
+go2og <- og_go_long %>%
+  distinct(GO_terms, OG) %>%   # remove duplicates
+  group_by(GO_terms) %>%
+  summarise(ogs = list(unique(OG)), .groups = "drop")
+
+# named list: each element is a character vector of OGs
+pathways_og <- setNames(go2og$ogs, go2og$GO_terms)
+
+# sanity: how big are the GO sets?
+summary(lengths(pathways_og))
+
+library(tibble)
+
+ranks_wp_vec <- res_gxe_wp_df %>%
+  filter(!is.na(stat)) %>%
+  transmute(OG, stat)
+
+ranks_wp_vec <- setNames(ranks_wp_vec$stat, ranks_wp_vec$OG)
+ranks_wp_vec <- sort(ranks_wp_vec, decreasing = TRUE)
+
+ranks_growth_vec <- res_gxe_growth_df %>%
+  filter(!is.na(stat)) %>%
+  transmute(OG, stat)
+
+ranks_growth_vec <- setNames(ranks_growth_vec$stat, ranks_growth_vec$OG)
+ranks_growth_vec <- sort(ranks_growth_vec, decreasing = TRUE)
+
+library(fgsea)
+
+set.seed(123)
+
+# WP G×E
+fgsea_wp <- fgsea(
+  pathways = pathways_og,
+  stats    = ranks_wp_vec,
+  minSize  = 10,    # tune as you like
+  maxSize  = 500
+)
+head()
+fgsea_wp_res <- fgsea_wp %>%
+  arrange(padj)
+
+head(fgsea_wp_res[, c("pathway", "NES", "pval", "padj")])
+# Growth G×E
+fgsea_growth <- fgsea(
+  pathways = pathways_og,
+  stats    = ranks_growth_vec,
+  minSize  = 10,
+  maxSize  = 500
+)
+
+fgsea_growth_res <- fgsea_growth %>%
+  arrange(padj)
+
+head(fgsea_growth_res[, c("pathway", "NES", "pval", "padj")])
+
+library(clusterProfiler)
+
+term2gene <- og_go_long %>%
+  distinct(GO_terms, OG) %>%
+  rename(term = GO_terms, gene = OG)
+
+term2gene <- term2gene %>%
+  mutate(
+    term = term %>%
+      str_replace("^.*-\\s*", "") %>%            # remove everything before/including " - "
+      str_replace("\\[.*\\]$", "") %>%           # remove [Evidence ...]
+      str_trim()                                 # trim whitespace
+  )
+# If you don't have GO descriptions handy, just use GO IDs as names
+term2name <- data.frame(
+  term = unique(term2gene$pathway),
+  name = unique(term2gene$pathway)
+)
+
+gsea_wp_cp <- GSEA(
+  geneList    = ranks_wp_vec,    # named numeric vector (OGs)
+  TERM2GENE   = term2gene,
+  TERM2NAME   = term2name,
+  pvalueCutoff = 1
+)
+
+gsea_wp_cp_res <- as.data.frame(gsea_wp_cp)
+head(gsea_wp_cp_res[, c("ID", "NES", "p.adjust")])
+
+gsea_growth_cp <- GSEA(
+  geneList    = ranks_growth_vec,
+  TERM2GENE   = term2gene,
+  TERM2NAME   = term2name,
+  pvalueCutoff = 1
+)
+
+gsea_growth_cp_res <- as.data.frame(gsea_growth_cp)
+
+# what fraction of OGs in your ranks have at least one GO term?
+mean(names(ranks_wp_vec) %in% og_go_long$OG)
+
+# are your OG names in ranks compatible with term2gene?
+mean(names(ranks_wp_vec) %in% term2gene$gene)
+
+fgsea_wp_res <- fgsea_wp %>% arrange(padj)
+library(dplyr)
+library(ggplot2)
+
+top_n <- 20
+
+fgsea_wp_top <- fgsea_wp_res %>%
+  filter(padj < 0.1) %>%          # adjust threshold if you want
+  slice_max(order_by = abs(NES), n = top_n) %>% 
+  mutate(
+    direction = ifelse(NES > 0, "positive", "negative"),
+    pathway   = factor(pathway, levels = pathway[order(NES)])  # for ordered y-axis
+  )
+
+top_pathway <- fgsea_wp_res$pathway[1]
+top_pathway
+
+fgsea::plotEnrichment(
+  pathway = pathways_og[[top_pathway]],  # the OGs in that GO term
+  stats   = ranks_wp_vec
+) + ggtitle(top_pathway)
+
+plot_fgsea_pathway <- function(pathway_id, pathways, ranks){
+  fgsea::plotEnrichment(
+    pathway = pathways[[pathway_id]],
+    stats   = ranks
+  ) + ggtitle(pathway_id)
+}
+
+# usage:
+plot_fgsea_pathway(fgsea_wp_top$pathway[1], pathways_og, ranks_wp_vec)
+gsea_wp_cp
+
+dotplot(gsea_wp_cp, showCategory = 20, split = ".sign") +
+  facet_grid(. ~ .sign) +
+  ggtitle("GO GSEA – WP G×E")
+
+dotplot(gsea_wp_cp, showCategory = 20, split = ".sign") +
+  facet_grid(. ~ .sign) +
+  ggtitle("GO GSEA – WP G×E") +
+  theme(
+    axis.text.y = element_text(size = 8) 
+  )
+gsea_df <- as.data.frame(gsea_wp_cp)
+
+top20_tbl <- gsea_df %>%
+  arrange(p.adjust) %>%
+  slice_head(n = 20)
+
+
+gsea_wp_cp_top20 <- gsea_wp_cp
+gsea_wp_cp_top20@result <- top20_tbl
+## 4. Now plot the dotplot using the gseaResult subset
+dotplot(gsea_wp_cp_top20, showCategory = 20, split = ".sign") +
+  facet_grid(. ~ .sign) +
+  ggtitle("Top 20 GO Terms – WP G×E (GSEA)")
+
+gsea_df <- as.data.frame(gsea_wp_cp)
+
+gsea_wp_top20_df <- gsea_df %>%
+  arrange(p.adjust) %>%           # top 20 by adj p (change if you want NES-based)
+  slice_head(n = 20) %>%
+  mutate(
+    sign = ifelse(NES > 0, "positive", "negative"),
+    # wrap long descriptions for readability
+    Description = str_wrap(Description, width = 45),
+    # order y-axis by NES (or p.adjust if you prefer)
+    Description = factor(Description, levels = rev(Description))
+  )
+
+library(ggplot2)
+
+ggplot(gsea_wp_top20_df,
+       aes(x = NES, y = Description,
+           size = setSize,
+           color = -log10(p.adjust))) +
+  geom_point() +
+  facet_grid(. ~ sign) +
+  scale_color_viridis_c() +
+  labs(
+    title = "Top 20 GO terms – WP G×E (GSEA)",
+    x     = "NES",
+    y     = NULL,
+    size  = "OGs in GO term",
+    color = "-log10(adj p)"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    axis.text.y = element_text(size = 10)
+  )
+
+library(ggplot2)
+
+ggplot(gsea_wp_top20_df,
+       aes(x = NES,
+           y = Description,
+           size = setSize,
+           fill = -log10(p.adjust))) +   # fill instead of color
+  geom_point(shape = 21, color = "black", stroke = 0.3) +  # border
+  facet_grid(. ~ sign) +
+  
+  # --- EXACT dotplot color scale ---
+  scale_fill_gradientn(
+    colors = c("#B40426", "#7F3B8D", "#3B528B", "#1F78B4"),
+    name = "-log10(p.adjust)"
+  ) +
+  
+  # --- replicate enrichplot dot sizes ---
+  scale_size(range = c(3, 12)) +
+
+  labs(
+    title = "Top 20 GO terms – WP G×E (GSEA)",
+    x = "NES",
+    y = NULL,
+    size = "OG Count"
+  ) +
+  
+  theme_bw(base_size = 12) +
+  theme(
+    axis.text.y = element_text(size = 9),
+    strip.text = element_text(size = 12, face = "bold"),
+    legend.key = element_rect(fill = "white", color = "white")
+  )
+```
+
+```{r, Soft Clustering}
+#Create orthogroup x condition matrix
+lfc_mat <- og_wide %>%
+  select(
+    OG,
+    log2FoldChange.pungens,
+    log2FoldChange.quiescens,
+    log2FoldChange.umbonatus
+  ) %>%
+  drop_na() %>%
+  column_to_rownames("OG") %>%
+  as.matrix()
+
+colnames(lfc_mat) <- c("SP", "SQ", "SU") 
+library(Mfuzz)
+library(Biobase)
+eset <- ExpressionSet(assayData = lfc_mat)
+
+# 2) Filter low-variance OGs
+eset_filt <- filter.std(eset, min.std = 0.3)
+
+# 3) Standardize
+eset_std <- standardise(eset_filt)
+
+# colnames are already "SP", "SQ", "SU"
+colnames(exprs(eset_std))
+# should show: "SP" "SQ" "SU"
+
+# 4) Fuzzification parameter
+m <- mestimate(eset_std)
+
+# 5) Number of clusters
+c <- 6
+cl <- mfuzz(eset_std, c = c, m = m)
+
+cluster_colors <- colorRampPalette(
+  c("#FFCCCC", "#FF6666", "#CC0000", "#660000")
+)(length(unique(cent_long$cluster)))
+
+colnames(exprs(eset_std)) <- c("SP", "SQ", "SU")
+mfuzz.plot(eset_std, cl = cl, mfrow = c(2, 3), col = cluster_colors)
+
+centroids <- cl$centers   # matrix: clusters × species
+cent_df <- as.data.frame(centroids)
+cent_df$cluster <- factor(1:nrow(cent_df))
+
+# Convert to long format
+library(tidyr)
+cent_long <- pivot_longer(
+  cent_df,
+  cols = c("SP", "SQ", "SU"),
+  names_to = "Species",
+  values_to = "Expression"
+)
+
+
+ggplot(cent_long, aes(x = Species, y = Expression, group = cluster, color = cluster)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = cluster_colors, name = "Cluster") +
+  labs(
+    x = "Species",
+    y = "Scaled Expression (Z-score)",
+    title = "Mfuzz Cluster Profiles"
+  ) +
+  facet_wrap(~ cluster, nrow = 2) +
+  theme_bw(base_size = 14) +
+  theme(
+    strip.text = element_text(size = 12, face = "bold"),
+    legend.position = "right"
+  )
+# Extract the standardized matrix in the same order
+mat_std <- exprs(eset_std)
+clusters <- cl$cluster
+mat_std <- mat_std[order(clusters), ]
+
+annotation_row <- data.frame(
+  cluster = factor(clusters[order(clusters)])
+)
+rownames(annotation_row) <- rownames(mat_std)
+
+pheatmap(
+  mat_std,
+  cluster_rows = FALSE,        # keep row order fixed
+  cluster_cols = FALSE,        # ← removes the top dendrogram
+  show_rownames = FALSE,
+  annotation_row = annotation_row,
+  main = "Orthogroup clusters (WP log2FC)",
+  color = colorRampPalette(c("blue", "white", "red"))(200),
+  labels_col = c("SP", "SQ", "SU")
+)
+
+
+```
+
